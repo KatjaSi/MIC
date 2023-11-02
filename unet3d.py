@@ -16,7 +16,7 @@ class UNet3D(nn.Module):
         )
         
         # Define the decoder (upsampling) path
-        self.decoder = Decoder(in_channels=256+512, out_channels=out_channels)
+        self.decoder = Decoder(in_channels=512, out_channels=out_channels) #in_channels=256+512,
         
 
         
