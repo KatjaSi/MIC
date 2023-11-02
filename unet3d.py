@@ -33,7 +33,7 @@ class UpConv3DBlock(nn.Module):
      
     def __init__(self, in_channels, out_channels):
         super(UpConv3DBlock, self).__init__()
-        self.upconv = nn.ConvTranspose3d(in_channels= in_channels, out_channels=out_channels, kernel_size=(3,3,3), padding=1) # deconvolution
+        self.upconv = nn.ConvTranspose3d(in_channels= in_channels, out_channels=out_channels, kernel_size=(2,2,2), pstride=2) # deconvolution
         self.bn = nn.BatchNorm3d(out_channels)
         self.relu = nn.ReLU()
 
