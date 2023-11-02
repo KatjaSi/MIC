@@ -11,7 +11,7 @@ class UNet3D(nn.Module):
            # nn.BatchNorm3d(64),
            # nn.ReLU(inplace=True),
             Conv3DBlock(in_channels=in_channels, out_channels=32),
-            Conv3DBlock(in_channels=32, out_channels=64*2),
+            Conv3DBlock(in_channels=32, out_channels=64),
             nn.MaxPool3d(kernel_size=2, stride=2)
         )
         
