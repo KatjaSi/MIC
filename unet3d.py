@@ -10,38 +10,15 @@ class UNet3D(nn.Module):
         
         # Define the middle (bottleneck) layer
         self.middle = nn.Sequential(
-           # nn.Conv3d(64, 128, kernel_size=3, padding=1),
-           # nn.BatchNorm3d(128),
-           # nn.ReLU(inplace=True),
-            #nn.Conv3d(256, 128, kernel_size=3, padding=1),
-            #nn.BatchNorm3d(128),
-            #nn.ReLU(inplace=True)
             Conv3DBlock(in_channels=256, out_channels=256),
             Conv3DBlock(in_channels=256, out_channels=512),
             UpConv3DBlock(in_channels=512, out_channels=512)
         )
         
         # Define the decoder (upsampling) path
-        self.decoder = Decoder(in_channels=256+512, out_channels=3)
+        self.decoder = Decoder(in_channels=256+512, out_channels=out_channels)
         
-        #nn.Sequential(
-         #   Conv3DBlock(in_channels=256+512, out_channels=256),
-          #  Conv3DBlock(in_channels=256, out_channels=256),
-           # UpConv3DBlock(in_channels=256, out_channels=256),
-            #Conv3DBlock(in_channels=128+256, out_channels=128),
-            #Conv3DBlock(in_channels=128, out_channels=128),
-            #UpConv3DBlock(in_channels=128, out_channels=128),
-            #Conv3DBlock(in_channels=64+128, out_channels=64),
-            #Conv3DBlock(in_channels=64, out_channels=64),
 
-            #nn.Conv3d(64,3, kernel_size=3, padding=1)
-           # nn.Conv3d(192, 64, kernel_size=3, padding=1),
-           # nn.BatchNorm3d(64),
-           # nn.ReLU(inplace=True),
-           # nn.Conv3d(64, 64, kernel_size=3, padding=1),
-           # nn.BatchNorm3d(64),
-           # nn.ReLU(inplace=True),
-           # nn.ConvTranspose3d(64, out_channels, kernel_size=2, stride=2)
         
     def forward(self, x):
 
@@ -108,11 +85,14 @@ class Decoder(nn.Module):
         self.conv6 = Conv3DBlock(in_channels=64, out_channels=64)
         self.final_conv = nn.Conv3d(64, out_channels, kernel_size=3, padding=1)
 
+        # helper layers
+        self.upsample = nn.Upsample(size=56, mode='nearest')
+
     def forward(self,x1,x2,x3,x4):
         x = self.conv1(torch.cat((x3, x4), dim=1))
         x = self.conv2(x)
         x = self.upconv1(x)
-        x = self.conv3(torch.cat((x2,x), dim=1))
+        x = self.conv3(torch.cat((self.updample(x2),x), dim=1))
         x = self.conv4(x)
         x = self.upconv2(x)
         x = self.conv5(torch.cat(x1,x),dim=1)
