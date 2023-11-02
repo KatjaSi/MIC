@@ -29,10 +29,10 @@ class UNet3D(nn.Module):
         return x5
 
 
-class Conv3DBlock(nn.Module):
+class UpConv3DBlock(nn.Module):
      
     def __init__(self, in_channels, out_channels):
-        super(Conv3DBlock, self).__init__()
+        super(UpConv3DBlock, self).__init__()
         self.upconv = nn.ConvTranspose3d(in_channels= in_channels, out_channels=out_channels, kernel_size=(3,3,3), padding=1) # deconvolution
         self.bn = nn.BatchNorm3d(out_channels)
         self.relu = nn.ReLU()
@@ -40,10 +40,10 @@ class Conv3DBlock(nn.Module):
     def forward(self, x):
         return self.relu(self.bn(self.upconv(x)))
     
-class UpConv3DBlock(nn.Module):
+class Conv3DBlock(nn.Module):
      
     def __init__(self, in_channels, out_channels):
-        super(UpConv3DBlock, self).__init__()
+        super(Conv3DBlock, self).__init__()
         self.conv = nn.Conv3d(in_channels= in_channels, out_channels=out_channels, kernel_size=(3,3,3), padding=1)
         self.bn = nn.BatchNorm3d(out_channels)
         self.relu = nn.ReLU()
@@ -85,8 +85,6 @@ class Decoder(nn.Module):
         self.conv6 = Conv3DBlock(in_channels=64, out_channels=64)
         self.final_conv = nn.Conv3d(64, out_channels, kernel_size=3, padding=1)
 
-        # helper layers
-        self.upsample = nn.Upsample(size=56, mode='nearest')
 
     def forward(self,x1,x2,x3,x4):
         x = self.conv1(torch.cat((x3, x4), dim=1))
@@ -106,12 +104,12 @@ class Decoder(nn.Module):
 #out_channels = 3  # Assuming 3 output channels (for tumor classes)
 
 # Create the UNet3D model
-#model = UNet3D(in_channels=4, out_channels=3)
+model = UNet3D(in_channels=4, out_channels=3)
 
 # Move the model to the device (e.g., GPU)
 #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 #model = model.to(device)
 
 # Print the model architecture
-#print(model)
+print(model)
 
