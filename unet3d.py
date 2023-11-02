@@ -87,7 +87,9 @@ class Decoder(nn.Module):
 
 
     def forward(self,x1,x2,x3,x4):
-        x = torch.cat((x3, x4), dim=1)
+       # x = torch.cat((x3, x4), dim=1)
+        x3_upsampled = nn.functional.interpolate(x3, size=x4.shape[2:], mode='trilinear', align_corners=False)
+        x = torch.cat((x3_upsampled, x4), dim=1)
         x = self.conv2(x)
         x = self.upconv1(x)
         x = self.conv3(x) #torch.cat((self.upsample(x2),x), dim=1)
