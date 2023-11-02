@@ -92,7 +92,7 @@ class Decoder(nn.Module):
         x = self.conv1(torch.cat((x3, x4), dim=1))
         x = self.conv2(x)
         x = self.upconv1(x)
-        x = self.conv3(torch.cat((self.updample(x2),x), dim=1))
+        x = self.conv3(torch.cat((self.upsample(x2),x), dim=1))
         x = self.conv4(x)
         x = self.upconv2(x)
         x = self.conv5(torch.cat(x1,x),dim=1)
