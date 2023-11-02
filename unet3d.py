@@ -73,7 +73,7 @@ class Encoder(nn.Module):
 class Decoder(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(Decoder, self).__init__()
-        self.conv1 = Conv3DBlock(in_channels=in_channels, out_channels=256)
+        self.conv1 = Conv3DBlock(in_channels=in_channels, out_channels=512) #256
         self.conv2 = Conv3DBlock(in_channels=256+512, out_channels=256)
         self.upconv1 = UpConv3DBlock(in_channels=256, out_channels=256)
         self.conv3 = Conv3DBlock(in_channels=128+256, out_channels=128) 
