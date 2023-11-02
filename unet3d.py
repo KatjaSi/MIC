@@ -93,7 +93,7 @@ class Decoder(nn.Module):
         x = self.conv2(x)
         x = self.upconv1(x)
         x2 = nn.functional.interpolate(x2, size=x.shape[2:], mode='trilinear', align_corners=False)
-        x =torch.cat((self.upsample(x2),x), dim=1)
+        x =torch.cat((x2,x), dim=1)
         x = self.conv4(x)
         x = self.upconv2(x)
         x = self.conv5(x) # torch.cat(x1,x),dim=1
