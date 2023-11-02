@@ -33,7 +33,7 @@ class UNet3D(nn.Module):
         
         # Define the decoder (upsampling) path
         self.decoder = nn.Sequential(
-            nn.Conv3d(192, 64, kernel_size=3, padding=1),
+            nn.Conv3d(384, 64, kernel_size=3, padding=1),
             nn.BatchNorm3d(64),
             nn.ReLU(inplace=True),
             nn.Conv3d(64, 64, kernel_size=3, padding=1),
