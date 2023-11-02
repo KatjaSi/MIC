@@ -12,15 +12,21 @@ class UNet3D(nn.Module):
            # nn.ReLU(inplace=True),
             Conv3DBlock(in_channels=in_channels, out_channels=32),
             Conv3DBlock(in_channels=32, out_channels=64),
-            nn.MaxPool3d(kernel_size=2, stride=2)
+            nn.MaxPool3d(kernel_size=2, stride=2),
+            Conv3DBlock(in_channels=64, out_channels=64),
+            Conv3DBlock(in_channels=64, out_channels=128),
+            nn.MaxPool3d(kernel_size=2, stride=2),
+            Conv3DBlock(in_channels=128, out_channels=128),
+            Conv3DBlock(in_channels=128, out_channels=256),
+            nn.MaxPool3d(kernel_size=2, stride=2),
         )
         
         # Define the middle (bottleneck) layer
         self.middle = nn.Sequential(
-            nn.Conv3d(64, 128, kernel_size=3, padding=1),
-            nn.BatchNorm3d(128),
-            nn.ReLU(inplace=True),
-            nn.Conv3d(128, 128, kernel_size=3, padding=1),
+           # nn.Conv3d(64, 128, kernel_size=3, padding=1),
+           # nn.BatchNorm3d(128),
+           # nn.ReLU(inplace=True),
+            nn.Conv3d(256, 128, kernel_size=3, padding=1),
             nn.BatchNorm3d(128),
             nn.ReLU(inplace=True)
         )
