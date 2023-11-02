@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 class UNet3D(nn.Module):
-    def __init__(self, in_channels=4, out_channels=3): # TODO: why input channels = 4?
+    def __init__(self, in_channels=4, out_channels=3, res_con=True): # TODO: why input channels = 4?
         super(UNet3D, self).__init__()
         
         # Define the encoder (downsampling) path
@@ -21,10 +21,8 @@ class UNet3D(nn.Module):
 
         
     def forward(self, x):
-
         x1, x2, x3 = self.encoder(x)
         x4 = self.middle(x3)
-        #x5 = self.decoder(torch.cat((x1, x2), dim=1))
         x5 = self.decoder(x1,x2,x3,x4)
         return x5
 
@@ -81,13 +79,13 @@ class Decoder(nn.Module):
         self.conv3 = Conv3DBlock(in_channels=128+256, out_channels=128) 
         self.conv4 = Conv3DBlock(in_channels=128, out_channels=128)
         self.upconv2 = UpConv3DBlock(in_channels=128, out_channels=128)
-        self.conv5 = Conv3DBlock(in_channels=64+128, out_channels=64) # 64+128
+        self.conv5 = Conv3DBlock(in_channels=64+128, out_channels=64) 
         self.conv6 = Conv3DBlock(in_channels=64, out_channels=64)
         self.final_conv = nn.Conv3d(64, out_channels, kernel_size=1)
 
 
     def forward(self,x1,x2,x3,x4):
-       # x = torch.cat((x3, x4), dim=1)
+        x4 = self.conv1(x4) # remove?
         x3_upsampled = nn.functional.interpolate(x3, size=x4.shape[2:], mode='trilinear', align_corners=False)
         x = torch.cat((x3_upsampled, x4), dim=1)
         x = self.conv2(x)
