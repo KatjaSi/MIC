@@ -83,7 +83,7 @@ class Decoder(nn.Module):
         self.upconv2 = UpConv3DBlock(in_channels=128, out_channels=128)
         self.conv5 = Conv3DBlock(in_channels=128, out_channels=64) # 64+128
         self.conv6 = Conv3DBlock(in_channels=64, out_channels=64)
-        self.final_conv = nn.ConvTranspose3d(64, out_channels, kernel_size=3, stride=2)
+        self.final_conv = nn.Conv3d(64, out_channels, kernel_size=1)
 
 
     def forward(self,x1,x2,x3,x4):
