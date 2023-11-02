@@ -6,67 +6,119 @@ class UNet3D(nn.Module):
         super(UNet3D, self).__init__()
         
         # Define the encoder (downsampling) path
-        self.encoder = nn.Sequential(
-           # nn.Conv3d(in_channels, 64, kernel_size=3, padding=1),
-           # nn.BatchNorm3d(64),
-           # nn.ReLU(inplace=True),
-            Conv3DBlock(in_channels=in_channels, out_channels=32),
-            Conv3DBlock(in_channels=32, out_channels=64),
-            nn.MaxPool3d(kernel_size=2, stride=2),
-            Conv3DBlock(in_channels=64, out_channels=64),
-            Conv3DBlock(in_channels=64, out_channels=128),
-            nn.MaxPool3d(kernel_size=2, stride=2),
-            Conv3DBlock(in_channels=128, out_channels=128),
-            Conv3DBlock(in_channels=128, out_channels=256),
-            nn.MaxPool3d(kernel_size=2, stride=2),
-        )
+        self.encoder = Encoder(in_channels=in_channels)
         
         # Define the middle (bottleneck) layer
         self.middle = nn.Sequential(
            # nn.Conv3d(64, 128, kernel_size=3, padding=1),
            # nn.BatchNorm3d(128),
            # nn.ReLU(inplace=True),
-            nn.Conv3d(256, 128, kernel_size=3, padding=1),
-            nn.BatchNorm3d(128),
-            nn.ReLU(inplace=True)
+            #nn.Conv3d(256, 128, kernel_size=3, padding=1),
+            #nn.BatchNorm3d(128),
+            #nn.ReLU(inplace=True)
+            Conv3DBlock(in_channels=256, out_channels=256),
+            Conv3DBlock(in_channels=256, out_channels=512),
+            UpConv3DBlock(in_channels=512, out_channels=512)
         )
         
         # Define the decoder (upsampling) path
-        self.decoder = nn.Sequential(
-            nn.Conv3d(384, 64, kernel_size=3, padding=1),
-            nn.BatchNorm3d(64),
-            nn.ReLU(inplace=True),
-            nn.Conv3d(64, 64, kernel_size=3, padding=1),
-            nn.BatchNorm3d(64),
-            nn.ReLU(inplace=True),
-            nn.ConvTranspose3d(64, out_channels, kernel_size=2, stride=2)
-        )
+        self.decoder = Decoder(in_channels=256+512, out_channels=3)
+        
+        #nn.Sequential(
+         #   Conv3DBlock(in_channels=256+512, out_channels=256),
+          #  Conv3DBlock(in_channels=256, out_channels=256),
+           # UpConv3DBlock(in_channels=256, out_channels=256),
+            #Conv3DBlock(in_channels=128+256, out_channels=128),
+            #Conv3DBlock(in_channels=128, out_channels=128),
+            #UpConv3DBlock(in_channels=128, out_channels=128),
+            #Conv3DBlock(in_channels=64+128, out_channels=64),
+            #Conv3DBlock(in_channels=64, out_channels=64),
+
+            #nn.Conv3d(64,3, kernel_size=3, padding=1)
+           # nn.Conv3d(192, 64, kernel_size=3, padding=1),
+           # nn.BatchNorm3d(64),
+           # nn.ReLU(inplace=True),
+           # nn.Conv3d(64, 64, kernel_size=3, padding=1),
+           # nn.BatchNorm3d(64),
+           # nn.ReLU(inplace=True),
+           # nn.ConvTranspose3d(64, out_channels, kernel_size=2, stride=2)
         
     def forward(self, x):
-        # Encoder path
-        x1 = self.encoder(x)
-        
-        # Middle (bottleneck) layer
-        x2 = self.middle(x1)
-        
-        # Decoder path
-        x3 = self.decoder(torch.cat((x1, x2), dim=1))
-        
-        return x3
+
+        x1, x2, x3 = self.encoder(x)
+        x4 = self.middle(x3)
+        #x5 = self.decoder(torch.cat((x1, x2), dim=1))
+        x5 = self.decoder(x1,x2,x3,x4)
+        return x5
 
 
 class Conv3DBlock(nn.Module):
      
     def __init__(self, in_channels, out_channels):
         super(Conv3DBlock, self).__init__()
+        self.upconv = nn.ConvTranspose3d(in_channels= in_channels, out_channels=out_channels, kernel_size=(3,3,3), padding=1) # deconvolution
+        self.bn = nn.BatchNorm3d(out_channels)
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        return self.relu(self.bn(self.upconv(x)))
+    
+class UpConv3DBlock(nn.Module):
+     
+    def __init__(self, in_channels, out_channels):
+        super(UpConv3DBlock, self).__init__()
         self.conv = nn.Conv3d(in_channels= in_channels, out_channels=out_channels, kernel_size=(3,3,3), padding=1)
         self.bn = nn.BatchNorm3d(out_channels)
         self.relu = nn.ReLU()
 
     def forward(self, x):
         return self.relu(self.bn(self.conv(x)))
+    
+
+class Encoder(nn.Module):
+    def __init__(self, in_channels):
+        super(Encoder, self).__init__()
+        self.conv1 = Conv3DBlock(in_channels=in_channels, out_channels=32)
+        self.conv2 = Conv3DBlock(in_channels=32, out_channels=64)
+        self.pool1 = nn.MaxPool3d(kernel_size=2, stride=2)
+        self.conv3 = Conv3DBlock(in_channels=64, out_channels=64)
+        self.conv4 = Conv3DBlock(in_channels=64, out_channels=128)
+        self.pool2 = nn.MaxPool3d(kernel_size=2, stride=2)
+        self.conv5 = Conv3DBlock(in_channels=128, out_channels=128)
+        self.conv6 = Conv3DBlock(in_channels=128, out_channels=256)
+        self.pool3 = nn.MaxPool3d(kernel_size=2, stride=2)
+
+    def forward(self, x):
+        x1 = self.pool1(self.conv2(self.conv1(x)))
+        x2 = self.pool2(self.conv4(self.conv3(x1)))
+        x3 = self.pool3(self.conv6(self.conv5(x2)))
+        return x1, x2, x3
 
 
+class Decoder(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(Decoder, self).__init__()
+        self.conv1 = Conv3DBlock(in_channels=in_channels, out_channels=256)
+        self.conv2 = Conv3DBlock(in_channels=256, out_channels=256)
+        self.upconv1 = UpConv3DBlock(in_channels=256, out_channels=256)
+        self.conv3 = Conv3DBlock(in_channels=128+256, out_channels=128)
+        self.conv4 = Conv3DBlock(in_channels=128, out_channels=128)
+        self.upconv2 = UpConv3DBlock(in_channels=128, out_channels=128)
+        self.conv5 = Conv3DBlock(in_channels=64+128, out_channels=64)
+        self.conv6 = Conv3DBlock(in_channels=64, out_channels=64)
+        self.final_conv = nn.Conv3d(64, out_channels, kernel_size=3, padding=1)
+
+    def forward(self,x1,x2,x3,x4):
+        x = self.conv1(torch.cat((x3, x4), dim=1))
+        x = self.conv2(x)
+        x = self.upconv1(x)
+        x = self.conv3(torch.cat((x2,x), dim=1))
+        x = self.conv4(x)
+        x = self.upconv2(x)
+        x = self.conv5(torch.cat(x1,x),dim=1)
+        x = self.conv6(x)
+        x = self.final_conv(x)
+        return x
 
 
 # Define the input and output channels (based on your task)
@@ -74,7 +126,7 @@ class Conv3DBlock(nn.Module):
 #out_channels = 3  # Assuming 3 output channels (for tumor classes)
 
 # Create the UNet3D model
-#model = UNet3D(in_channels, out_channels)
+#model = UNet3D(in_channels=4, out_channels=3)
 
 # Move the model to the device (e.g., GPU)
 #device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -82,3 +134,4 @@ class Conv3DBlock(nn.Module):
 
 # Print the model architecture
 #print(model)
+
