@@ -78,10 +78,10 @@ class Decoder(nn.Module):
         self.conv1 = Conv3DBlock(in_channels=in_channels, out_channels=256)
         self.conv2 = Conv3DBlock(in_channels=256+512, out_channels=256)
         self.upconv1 = UpConv3DBlock(in_channels=256, out_channels=256)
-        self.conv3 = Conv3DBlock(in_channels=128+256, out_channels=128) # in_channels=128+256
+        self.conv3 = Conv3DBlock(in_channels=128+256, out_channels=128) 
         self.conv4 = Conv3DBlock(in_channels=128, out_channels=128)
         self.upconv2 = UpConv3DBlock(in_channels=128, out_channels=128)
-        self.conv5 = Conv3DBlock(in_channels=128, out_channels=64) # 64+128
+        self.conv5 = Conv3DBlock(in_channels=64+128, out_channels=64) # 64+128
         self.conv6 = Conv3DBlock(in_channels=64, out_channels=64)
         self.final_conv = nn.Conv3d(64, out_channels, kernel_size=1)
 
@@ -97,6 +97,8 @@ class Decoder(nn.Module):
         x = self.conv3(x)
         x = self.conv4(x)
         x = self.upconv2(x)
+        x1 = nn.functional.interpolate(x1, size=x.shape[2:], mode='trilinear', align_corners=False)
+        x =torch.cat((x1,x), dim=1)
         x = self.conv5(x) # torch.cat(x1,x),dim=1
         x = self.conv6(x)
         x = self.final_conv(x)
