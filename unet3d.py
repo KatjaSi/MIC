@@ -78,10 +78,10 @@ class Decoder(nn.Module):
         self.conv1 = Conv3DBlock(in_channels=in_channels, out_channels=256)
         self.conv2 = Conv3DBlock(in_channels=256, out_channels=256)
         self.upconv1 = UpConv3DBlock(in_channels=256, out_channels=256)
-        self.conv3 = Conv3DBlock(in_channels=128+256, out_channels=128)
+        self.conv3 = Conv3DBlock(in_channels=256, out_channels=128) # in_channels=128+256
         self.conv4 = Conv3DBlock(in_channels=128, out_channels=128)
         self.upconv2 = UpConv3DBlock(in_channels=128, out_channels=128)
-        self.conv5 = Conv3DBlock(in_channels=64+128, out_channels=64)
+        self.conv5 = Conv3DBlock(in_channels=128, out_channels=64) # 64+128
         self.conv6 = Conv3DBlock(in_channels=64, out_channels=64)
         self.final_conv = nn.Conv3d(64, out_channels, kernel_size=3, padding=1)
 
