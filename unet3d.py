@@ -111,7 +111,8 @@ class Decoder(nn.Module):
         x = self.conv5(x) # torch.cat(x1,x),dim=1
         x = self.conv6(x)
         x = self.final_conv(x)
-        return x
+        #return x
+        return torch.sigmoid(x)
 
 
 # Define the input and output channels (based on your task)
