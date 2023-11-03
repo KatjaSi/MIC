@@ -71,10 +71,10 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, res_con=True):
         super(Decoder, self).__init__()
         self.conv1 = Conv3DBlock(in_channels=in_channels, out_channels=512) #256
-        self.conv2 = Conv3DBlock(in_channels=256+512, out_channels=256)
+        self.conv2 = Conv3DBlock(in_channels=256+512 if res_con else 512, out_channels=256)
         self.upconv1 = UpConv3DBlock(in_channels=256, out_channels=256)
         self.conv3 = Conv3DBlock(in_channels=128+256, out_channels=128) 
         self.conv4 = Conv3DBlock(in_channels=128, out_channels=128)
@@ -82,12 +82,14 @@ class Decoder(nn.Module):
         self.conv5 = Conv3DBlock(in_channels=64+128, out_channels=64) 
         self.conv6 = Conv3DBlock(in_channels=64, out_channels=64)
         self.final_conv = nn.Conv3d(64, out_channels, kernel_size=1)
+        self.res_con = res_con
 
 
     def forward(self,x1,x2,x3,x4):
-        x4 = self.conv1(x4) # remove?
-        x3_upsampled = nn.functional.interpolate(x3, size=x4.shape[2:], mode='trilinear', align_corners=False)
-        x = torch.cat((x3_upsampled, x4), dim=1)
+        x = self.conv1(x4) 
+        if self.res_con:
+            x3_upsampled = nn.functional.interpolate(x3, size=x.shape[2:], mode='trilinear', align_corners=False)
+            x = torch.cat((x3_upsampled, x), dim=1)
         x = self.conv2(x)
         x = self.upconv1(x)
         x2 = nn.functional.interpolate(x2, size=x.shape[2:], mode='trilinear', align_corners=False)
