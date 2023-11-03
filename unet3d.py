@@ -112,7 +112,7 @@ class Decoder(nn.Module):
         x = self.conv6(x)
         x = self.final_conv(x)
         #return x
-        return torch.sigmoid(x)
+        return nn.functional.softmax(x,dim=1)
 
 
 # Define the input and output channels (based on your task)
