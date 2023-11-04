@@ -2,8 +2,7 @@ import torch
 import torch.nn as nn
 
 class UNet3D(nn.Module):
-    def __init__(self, in_channels=4, out_channels=3, dropout = 0.0): # TODO: why input channels = 4?
-        super(UNet3D, self).__init__()
+    def __init__(self, in_channels=4, out_channels=3, dropout = 0.0):
         
         # Define the encoder (downsampling) path
         self.encoder = Encoder(in_channels=in_channels, dropout=dropout)
@@ -16,7 +15,7 @@ class UNet3D(nn.Module):
         )
         
         # Define the decoder (upsampling) path
-        self.decoder = Decoder(in_channels=512, out_channels=out_channels, dropout=dropout) #in_channels=256+512,
+        self.decoder = Decoder(in_channels=512, out_channels=out_channels, dropout=dropout) 
         
 
         
@@ -24,7 +23,9 @@ class UNet3D(nn.Module):
         x1, x2, x3 = self.encoder(x)
         x4 = self.middle(x3)
         x5 = self.decoder(x1,x2,x3,x4)
-        return x5
+
+        output = torch.sigmoid(x5)
+        return output
 
 
 class UpConv3DBlock(nn.Module):
