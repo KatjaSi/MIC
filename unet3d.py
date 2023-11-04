@@ -23,9 +23,7 @@ class UNet3D(nn.Module):
         x1, x2, x3 = self.encoder(x)
         x4 = self.middle(x3)
         x5 = self.decoder(x1,x2,x3,x4)
-
-        output = torch.sigmoid(x5)
-        return output
+        return x5
 
 
 class UpConv3DBlock(nn.Module):
