@@ -3,7 +3,7 @@ import torch.nn as nn
 
 class UNet3D(nn.Module):
     def __init__(self, in_channels=4, out_channels=3, dropout = 0.0):
-        
+        super(UNet3D,self).__init__()
         # Define the encoder (downsampling) path
         self.encoder = Encoder(in_channels=in_channels, dropout=dropout)
         
