@@ -2,20 +2,20 @@ import torch
 import torch.nn as nn
 
 class UNet3D(nn.Module):
-    def __init__(self, in_channels=4, out_channels=3):
+    def __init__(self, in_channels=4, out_channels=3, group_norm=False):
         super(UNet3D,self).__init__()
         # Define the encoder (downsampling) path
-        self.encoder = Encoder(in_channels=in_channels)
+        self.encoder = Encoder(in_channels=in_channels, group_norm=group_norm)
         
         # Define the middle (bottleneck) layer
         self.middle = nn.Sequential(
-            Conv3DBlock(in_channels=256, out_channels=256),
-            Conv3DBlock(in_channels=256, out_channels=512),
-            UpConv3DBlock(in_channels=512, out_channels=512)
+            Conv3DBlock(in_channels=256, out_channels=256, group_norm=group_norm),
+            Conv3DBlock(in_channels=256, out_channels=512, group_norm=group_norm),
+            UpConv3DBlock(in_channels=512, out_channels=512, group_norm=group_norm)
         )
         
         # Define the decoder (upsampling) path
-        self.decoder = Decoder(in_channels=512, out_channels=out_channels) 
+        self.decoder = Decoder(in_channels=512, out_channels=out_channels, group_norm=group_norm) 
         
 
         
@@ -28,44 +28,52 @@ class UNet3D(nn.Module):
 
 class UpConv3DBlock(nn.Module):
      
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, group_norm=False):
         super(UpConv3DBlock, self).__init__()
-        self.upconv = nn.ConvTranspose3d(in_channels= in_channels, out_channels=out_channels, kernel_size=(2,2,2), stride=2) # deconvolution
-        self.bn = nn.BatchNorm3d(out_channels)
+        self.upconv = nn.ConvTranspose3d(in_channels=in_channels, out_channels=out_channels, kernel_size=(2,2,2), stride=2) # deconvolution
+       # self.bn = nn.BatchNorm3d(out_channels)
+        self.gn = nn.GroupNorm(num_groups=4, num_channels=out_channels)
         self.relu = nn.ReLU()
+        self.group_norm = group_norm
 
     def forward(self, x):
         x = self.upconv(x)
-        x = self.bn(x)
+        #x = self.bn(x)
+        if self.group_norm:
+            x = self.gn(x)
         x = self.relu(x)
         return x
     
 class Conv3DBlock(nn.Module):
      
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, group_norm=False):
         super(Conv3DBlock, self).__init__()
         self.conv = nn.Conv3d(in_channels= in_channels, out_channels=out_channels, kernel_size=(3,3,3), padding=1)
-        self.bn = nn.BatchNorm3d(out_channels)
+        #self.bn = nn.BatchNorm3d(out_channels)
+        self.group_norm = group_norm
+        self.gn = nn.GroupNorm(num_groups=4, num_channels=out_channels)
         self.relu = nn.ReLU()
 
     def forward(self, x):
         x = self.conv(x)
-        x = self.bn(x)
+       # x = self.bn(x)
+        if self.group_norm:
+            x = self.gn(x)
         x = self.relu(x)
         return x
     
 
 class Encoder(nn.Module):
-    def __init__(self, in_channels):
+    def __init__(self, in_channels, group_norm=False):
         super(Encoder, self).__init__()
-        self.conv1 = Conv3DBlock(in_channels=in_channels, out_channels=32)
-        self.conv2 = Conv3DBlock(in_channels=32, out_channels=64)
+        self.conv1 = Conv3DBlock(in_channels=in_channels, out_channels=32, group_norm=group_norm)
+        self.conv2 = Conv3DBlock(in_channels=32, out_channels=64,  group_norm=group_norm)
         self.pool1 = nn.MaxPool3d(kernel_size=2, stride=2)
-        self.conv3 = Conv3DBlock(in_channels=64, out_channels=64)
-        self.conv4 = Conv3DBlock(in_channels=64, out_channels=128)
+        self.conv3 = Conv3DBlock(in_channels=64, out_channels=64,  group_norm=group_norm)
+        self.conv4 = Conv3DBlock(in_channels=64, out_channels=128,  group_norm=group_norm)
         self.pool2 = nn.MaxPool3d(kernel_size=2, stride=2)
-        self.conv5 = Conv3DBlock(in_channels=128, out_channels=128)
-        self.conv6 = Conv3DBlock(in_channels=128, out_channels=256)
+        self.conv5 = Conv3DBlock(in_channels=128, out_channels=128,  group_norm=group_norm)
+        self.conv6 = Conv3DBlock(in_channels=128, out_channels=256,  group_norm=group_norm)
         self.pool3 = nn.MaxPool3d(kernel_size=2, stride=2)
 
     def forward(self, x):
@@ -76,16 +84,16 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, group_norm=False):
         super(Decoder, self).__init__()
-        self.conv1 = Conv3DBlock(in_channels=in_channels, out_channels=512) 
-        self.conv2 = Conv3DBlock(in_channels=256+512, out_channels=256)
-        self.upconv1 = UpConv3DBlock(in_channels=256, out_channels=256)
-        self.conv3 = Conv3DBlock(in_channels=128+256, out_channels=128) 
-        self.conv4 = Conv3DBlock(in_channels=128, out_channels=128)
-        self.upconv2 = UpConv3DBlock(in_channels=128, out_channels=128)
-        self.conv5 = Conv3DBlock(in_channels=64+128, out_channels=64) 
-        self.conv6 = Conv3DBlock(in_channels=64, out_channels=64)
+        self.conv1 = Conv3DBlock(in_channels=in_channels, out_channels=512, group_norm=group_norm) 
+        self.conv2 = Conv3DBlock(in_channels=256+512, out_channels=256,  group_norm=group_norm)
+        self.upconv1 = UpConv3DBlock(in_channels=256, out_channels=256,  group_norm=group_norm)
+        self.conv3 = Conv3DBlock(in_channels=128+256, out_channels=128,  group_norm=group_norm) 
+        self.conv4 = Conv3DBlock(in_channels=128, out_channels=128,  group_norm=group_norm)
+        self.upconv2 = UpConv3DBlock(in_channels=128, out_channels=128,  group_norm=group_norm)
+        self.conv5 = Conv3DBlock(in_channels=64+128, out_channels=64,  group_norm=group_norm) 
+        self.conv6 = Conv3DBlock(in_channels=64, out_channels=64,  group_norm=group_norm)
         self.final_conv = nn.Conv3d(64, out_channels, kernel_size=1)
 
     def forward(self,x1,x2,x3,x4):
